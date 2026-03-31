@@ -89,3 +89,6 @@ t_survey_period = {
         "status": "pending"
     }
 }
+
+# 模拟调查数据表 t_survey_data
+t_survey_data = {}
