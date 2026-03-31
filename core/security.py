@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta
-import jwt
+from jose import jwt
 from passlib.context import CryptContext
 
 SECRET_KEY = "YUNNAN_DATA_COLLECTION_SECRET_KEY"

@@ -1,6 +1,6 @@
 from fastapi import Depends, HTTPException
 from fastapi.security import OAuth2PasswordBearer
-import jwt
+from jose import jwt
 from core.security import SECRET_KEY, ALGORITHM
 from db.mock_db import ROLE_PERMISSIONS, PERMISSIONS
 

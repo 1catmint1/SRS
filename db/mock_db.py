@@ -1,5 +1,3 @@
-from core.security import get_password_hash
-
 # 权限标识符定义
 PERMISSIONS = {
     "ENT_SUBMIT": "企业数据填报",
@@ -15,12 +13,12 @@ ROLE_PERMISSIONS = {
     3: ["ENT_SUBMIT"]              # 企业用户
 }
 
-# 模拟用户数据库
+# 模拟用户数据库（使用预计算的密码哈希）
 USER_DATABASE = {
     "admin": {
         "user_id": 1,
         "username": "admin",
-        "password_hash": get_password_hash("password123"),
+        "password_hash": "pbkdf2_sha256$260000$random_salt$password_hash_value",
         "role_id": 1,
         "role_name": "省级管理员",
         "full_name": "系统管理员",
@@ -29,7 +27,7 @@ USER_DATABASE = {
     "city_admin": {
         "user_id": 2,
         "username": "city_admin",
-        "password_hash": get_password_hash("password123"),
+        "password_hash": "pbkdf2_sha256$260000$random_salt$password_hash_value",
         "role_id": 2,
         "role_name": "市级审核员",
         "full_name": "昆明市审核员",
@@ -38,13 +36,26 @@ USER_DATABASE = {
     "enterprise": {
         "user_id": 3,
         "username": "enterprise",
-        "password_hash": get_password_hash("password123"),
+        "password_hash": "pbkdf2_sha256$260000$random_salt$password_hash_value",
         "role_id": 3,
         "role_name": "企业用户",
         "full_name": "某制造企业",
         "is_active": True
     }
 }
+
+# 初始化用户密码哈希的函数
+def initialize_user_passwords():
+    """初始化用户密码哈希"""
+    from core.security import get_password_hash
+    
+    password_hash = get_password_hash("password123")
+    
+    for username in USER_DATABASE:
+        USER_DATABASE[username]["password_hash"] = password_hash
+
+# 在模块加载时初始化密码
+initialize_user_passwords()
 
 # 模拟登录失败记录缓存
 login_attempts = {}
