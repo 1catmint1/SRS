@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from core.swagger_ui import get_custom_swagger_ui_html
-from api.routers import auth, province, admin, audit, enterprise
+from api.routers import auth, province, admin, audit, enterprise, notification, analysis, national_system
 
 app = FastAPI(
     title="云南省企业就业失业数据采集系统",
@@ -19,6 +19,9 @@ app.include_router(province.router, prefix="/api/v1")
 app.include_router(admin.router, prefix="/api/v1")
 app.include_router(audit.router, prefix="/api/v1")
 app.include_router(enterprise.router, prefix="/api/v1")
+app.include_router(notification.router, prefix="/api/v1")
+app.include_router(analysis.router, prefix="/api/v1")
+app.include_router(national_system.router, prefix="/api/v1")
 
 if __name__ == "__main__":
     import uvicorn
