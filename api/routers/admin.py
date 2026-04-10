@@ -422,3 +422,124 @@ async def get_audit_logs(limit: int = 50, current_user: dict = Depends(get_curre
         "total": len(t_operation_log),
         "logs": logs
     }
+
+
+# ==================== 数据删除功能 ====================
+
+@router.delete("/survey-data/{survey_id}",
+               summary="删除调查数据",
+               dependencies=[Depends(PermissionChecker("PRO_ADMIN"))])
+async def delete_survey_data(survey_id: int, current_user: dict = Depends(get_current_user)):
+    """删除指定的调查数据"""
+    # 检查数据是否存在
+    from db.mock_db import t_survey_data
+    if survey_id not in t_survey_data:
+        raise HTTPException(status_code=404, detail="调查数据不存在")
+    
+    # 记录原始数据
+    original_data = t_survey_data[survey_id].copy()
+    
+    # 删除数据
+    del t_survey_data[survey_id]
+    
+    # 记录操作日志
+    log_entry = {
+        "user_id": current_user.get("user_id"),
+        "operation_type": "DELETE_SURVEY_DATA",
+        "table_name": "t_survey_data",
+        "record_id": survey_id,
+        "old_value": str(original_data),
+        "new_value": "",
+        "reason": "删除调查数据",
+        "operation_time": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    }
+    t_operation_log.append(log_entry)
+    
+    return {
+        "status": "success",
+        "msg": f"调查数据【{survey_id}】删除成功",
+        "audit_log": log_entry
+    }
+
+
+@router.delete("/survey-data/batch",
+               summary="批量删除调查数据",
+               dependencies=[Depends(PermissionChecker("PRO_ADMIN"))])
+async def batch_delete_survey_data(
+    survey_ids: List[int],
+    current_user: dict = Depends(get_current_user)
+):
+    """批量删除调查数据"""
+    from db.mock_db import t_survey_data
+    
+    deleted_count = 0
+    failed_ids = []
+    
+    for survey_id in survey_ids:
+        if survey_id in t_survey_data:
+            original_data = t_survey_data[survey_id].copy()
+            del t_survey_data[survey_id]
+            deleted_count += 1
+            
+            # 记录操作日志
+            log_entry = {
+                "user_id": current_user.get("user_id"),
+                "operation_type": "BATCH_DELETE_SURVEY_DATA",
+                "table_name": "t_survey_data",
+                "record_id": survey_id,
+                "old_value": str(original_data),
+                "new_value": "",
+                "reason": "批量删除调查数据",
+                "operation_time": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            }
+            t_operation_log.append(log_entry)
+        else:
+            failed_ids.append(survey_id)
+    
+    return {
+        "status": "success",
+        "msg": f"成功删除{deleted_count}条数据",
+        "deleted_count": deleted_count,
+        "failed_ids": failed_ids
+    }
+
+
+# ==================== 取样分析功能 ====================
+
+@router.get("/sampling-analysis",
+            summary="获取取样分析数据",
+            dependencies=[Depends(PermissionChecker("PRO_ADMIN"))])
+async def get_sampling_analysis(
+    survey_period_id: int = None,
+    current_user: dict = Depends(get_current_user)
+):
+    """获取各市企业的数量和占比及饼图数据"""
+    from db.mock_db import t_enterprise_info
+    
+    # 统计各市企业数量
+    city_stats = {}
+    total_count = 0
+    
+    for enterprise_id, info in t_enterprise_info.items():
+        city = info.get("region_name", "未知")
+        city_stats[city] = city_stats.get(city, 0) + 1
+        total_count += 1
+    
+    # 计算占比并生成饼图数据
+    pie_data = []
+    for city, count in city_stats.items():
+        percentage = (count / total_count * 100) if total_count > 0 else 0
+        pie_data.append({
+            "name": city,
+            "value": count,
+            "percentage": round(percentage, 2)
+        })
+    
+    # 按数量排序
+    pie_data.sort(key=lambda x: x["value"], reverse=True)
+    
+    return {
+        "status": "success",
+        "total_enterprises": total_count,
+        "city_statistics": pie_data
+    }
